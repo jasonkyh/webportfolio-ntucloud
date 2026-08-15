@@ -1,843 +1,1990 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dominance &amp; Differentiation — Jason Khoo</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.0/chart.umd.min.js"></script>
-<style>
-/* ============ TOKENS ============ */
-:root{
-  --void:#0a0e13;
-  --panel:#111823;
-  --panel-2:#141d29;
-  --line:#20303f;
-  --line-soft:#182330;
-  --text:#eef3f7;
-  --text-dim:#93a5b8;
-  --text-mute:#59697b;
-  --aws:#ffb454;
-  --aws-soft:rgba(255,180,84,.13);
-  --azure:#5eb3ff;
-  --azure-soft:rgba(94,179,255,.13);
-  --gcp:#48e0a5;
-  --gcp-soft:rgba(72,224,165,.13);
-  --others:#3a4657;
-  --r:12px;
-  --maxw:1120px;
-  --disp:'Space Grotesk',sans-serif;
-  --body:'IBM Plex Sans',sans-serif;
-  --mono:'IBM Plex Mono',monospace;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-@media (prefers-reduced-motion: reduce){
-  html{scroll-behavior:auto}
-  *{animation-duration:.01ms !important;transition-duration:.01ms !important}
-}
-body{
-  background:
-    radial-gradient(1100px 500px at 12% -10%, rgba(94,179,255,.08), transparent 60%),
-    radial-gradient(900px 500px at 100% 10%, rgba(255,180,84,.06), transparent 55%),
-    var(--void);
-  color:var(--text);
-  font-family:var(--body);
-  line-height:1.6;
-  -webkit-font-smoothing:antialiased;
-  overflow-x:hidden;
-}
-.bg-grid{
-  position:fixed;inset:0;z-index:0;pointer-events:none;
-  background-image:
-    linear-gradient(rgba(255,255,255,.028) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,.028) 1px, transparent 1px);
-  background-size:64px 64px;
-  mask-image:radial-gradient(1200px 800px at 50% 0%, #000 10%, transparent 75%);
-}
-h1,h2,h3,h4{font-family:var(--disp);font-weight:600;letter-spacing:-.01em;color:var(--text)}
-.eyebrow{
-  font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
-  color:var(--text-mute);display:flex;align-items:center;gap:.5em;margin-bottom:1rem;
-}
-.eyebrow::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--azure);box-shadow:0 0 10px var(--azure)}
-.mono{font-family:var(--mono)}
-a{color:inherit}
-
-/* ============ LAYOUT ============ */
-main{position:relative;z-index:1}
-.wrap{max-width:var(--maxw);margin:0 auto;padding:0 28px}
-section{padding:118px 0}
-.section-head{max-width:640px;margin-bottom:56px}
-.section-head h2{font-size:clamp(1.7rem,3.4vw,2.5rem);line-height:1.15;margin-bottom:16px}
-.section-head p{color:var(--text-dim);font-size:1.02rem}
-.lede{color:var(--text-dim);max-width:680px;font-size:1.05rem}
-
-/* ============ PROGRESS + NAV ============ */
-.progress{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--aws),var(--azure),var(--gcp));z-index:100;width:0%}
-nav.rail{
-  position:fixed;top:22px;left:50%;transform:translateX(-50%);z-index:90;
-  display:flex;gap:2px;background:rgba(17,24,35,.75);backdrop-filter:blur(14px);
-  border:1px solid var(--line);border-radius:999px;padding:5px;
-}
-nav.rail button{
-  font-family:var(--mono);font-size:.68rem;letter-spacing:.04em;color:var(--text-mute);
-  background:none;border:none;padding:8px 13px;border-radius:999px;cursor:pointer;
-  transition:color .25s, background .25s;white-space:nowrap;
-}
-nav.rail button:hover{color:var(--text)}
-nav.rail button.active{color:var(--void);background:var(--text)}
-@media (max-width:900px){ nav.rail{display:none} }
-
-/* ============ HERO ============ */
-.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:160px 0 80px;position:relative}
-.hero-kicker{font-family:var(--mono);font-size:.78rem;color:var(--text-mute);letter-spacing:.12em;text-transform:uppercase;margin-bottom:22px}
-.hero h1{font-size:clamp(2.6rem,6.4vw,5rem);line-height:1.03;max-width:920px}
-.hero h1 .accent-aws{color:var(--aws)}
-.hero h1 .accent-azure{color:var(--azure)}
-.hero h1 .accent-gcp{color:var(--gcp)}
-.hero-sub{margin-top:26px;font-size:1.18rem;color:var(--text-dim);max-width:600px}
-.hero-meta{margin-top:44px;display:flex;gap:36px;flex-wrap:wrap;font-family:var(--mono);font-size:.82rem;color:var(--text-mute)}
-.hero-meta strong{color:var(--text);display:block;font-family:var(--body);font-weight:600;font-size:.95rem}
-
-.skyline{margin-top:70px;display:flex;align-items:flex-end;gap:28px;height:230px;max-width:640px;position:relative}
-.tower{flex:1;display:flex;flex-direction:column;justify-content:flex-end;position:relative}
-.tower .bar{
-  width:100%;height:4px;border-radius:6px 6px 0 0;position:relative;overflow:hidden;
-  transition:height 1.4s cubic-bezier(.16,1,.3,1);
-  background-image:repeating-linear-gradient(180deg, rgba(0,0,0,.35) 0 1px, transparent 1px 9px);
-}
-.tower.aws .bar{background-color:var(--aws)}
-.tower.azure .bar{background-color:var(--azure)}
-.tower.gcp .bar{background-color:var(--gcp)}
-.skyline.in .tower.aws .bar{height:198px}
-.skyline.in .tower.azure .bar{height:120px}
-.skyline.in .tower.gcp .bar{height:60px}
-.tower .label{margin-top:12px;font-family:var(--mono);font-size:.74rem;color:var(--text-mute)}
-.tower .pct{font-family:var(--disp);font-size:1.5rem;color:var(--text);margin-top:2px}
-.skyline-caption{position:absolute;right:0;bottom:-38px;font-family:var(--mono);font-size:.68rem;color:var(--text-mute)}
-
-/* ============ CARDS / PANELS ============ */
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:28px}
-.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-@media (max-width:900px){ .grid-3{grid-template-columns:1fr} .grid-2{grid-template-columns:1fr} }
-
-.stat-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-top:20px}
-.stat-strip div{background:var(--panel);padding:22px 20px}
-.stat-strip .num{font-family:var(--disp);font-size:1.9rem;color:var(--text)}
-.stat-strip .lbl{font-family:var(--mono);font-size:.7rem;color:var(--text-mute);margin-top:6px;letter-spacing:.03em}
-@media (max-width:900px){.stat-strip{grid-template-columns:repeat(2,1fr)}}
-
-.chart-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:26px}
-.chart-card .chart-head{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px;margin-bottom:18px}
-.chart-card h3{font-size:1.05rem}
-.chart-card .note{font-family:var(--mono);font-size:.72rem;color:var(--text-mute);margin-top:14px}
-canvas{max-width:100%}
-
-.toggle-group{display:flex;gap:6px;background:var(--panel-2);border:1px solid var(--line);border-radius:999px;padding:4px}
-.toggle-group button{font-family:var(--mono);font-size:.72rem;padding:7px 14px;border-radius:999px;border:none;background:none;color:var(--text-mute);cursor:pointer;transition:.2s}
-.toggle-group button.active{background:var(--text);color:var(--void)}
-
-/* legend chips */
-.legend-row{display:flex;gap:18px;flex-wrap:wrap;font-family:var(--mono);font-size:.74rem;color:var(--text-dim)}
-.legend-row span{display:inline-flex;align-items:center;gap:7px}
-.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
-.dot.aws{background:var(--aws)} .dot.azure{background:var(--azure)} .dot.gcp{background:var(--gcp)} .dot.others{background:var(--others)}
-
-/* provider tag */
-.tag{display:inline-block;font-family:var(--mono);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:6px;border:1px solid var(--line)}
-.tag.aws{color:var(--aws);border-color:var(--aws-soft);background:var(--aws-soft)}
-.tag.azure{color:var(--azure);border-color:var(--azure-soft);background:var(--azure-soft)}
-.tag.gcp{color:var(--gcp);border-color:var(--gcp-soft);background:var(--gcp-soft)}
-
-/* ============ SERVICES TABS ============ */
-.tabs{display:flex;gap:8px;margin-bottom:26px;flex-wrap:wrap}
-.tabs button{
-  font-family:var(--mono);font-size:.76rem;padding:9px 16px;border-radius:8px;
-  border:1px solid var(--line);background:var(--panel);color:var(--text-dim);cursor:pointer;transition:.2s;
-}
-.tabs button:hover{border-color:var(--text-mute)}
-.tabs button.active{background:var(--text);color:var(--void);border-color:var(--text)}
-.tab-panel{display:none}
-.tab-panel.active{display:block;animation:fadein .4s ease}
-@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-.svc-table{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
-.svc-table .cell{background:var(--panel);padding:22px}
-.svc-table .cell h4{font-size:.92rem;margin-bottom:10px}
-.svc-table .cell p{font-size:.87rem;color:var(--text-dim)}
-@media (max-width:900px){.svc-table{grid-template-columns:1fr}}
-.svc-note{margin-top:18px;color:var(--text-dim);font-size:.94rem;max-width:760px}
-
-/* ============ CASE STUDIES ============ */
-.case-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:26px;display:flex;flex-direction:column;gap:14px;transition:transform .3s, border-color .3s}
-.case-card:hover{transform:translateY(-4px);border-color:var(--text-mute)}
-.case-card .co{font-family:var(--disp);font-size:1.15rem}
-.case-card .metric{font-family:var(--disp);font-size:2.1rem;margin-top:6px}
-.case-card.aws .metric{color:var(--aws)}
-.case-card.azure .metric{color:var(--azure)}
-.case-card.gcp .metric{color:var(--gcp)}
-.case-card .metric-lbl{font-family:var(--mono);font-size:.72rem;color:var(--text-mute);margin-top:-8px}
-.case-card p{font-size:.9rem;color:var(--text-dim)}
-
-/* ============ INNOVATION ============ */
-.innov-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:26px}
-.innov-card h3{font-size:1.05rem;margin-bottom:6px}
-.innov-card .sub{font-family:var(--mono);font-size:.72rem;color:var(--text-mute);margin-bottom:16px}
-.innov-card ul{list-style:none}
-.innov-card li{font-size:.88rem;color:var(--text-dim);padding:10px 0;border-top:1px solid var(--line-soft)}
-.innov-card li:first-child{border-top:none}
-.innov-card li b{color:var(--text);font-weight:600}
-
-/* ============ PRICING ============ */
-.price-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:26px;border-top:3px solid var(--line)}
-.price-card.aws{border-top-color:var(--aws)}
-.price-card.azure{border-top-color:var(--azure)}
-.price-card.gcp{border-top-color:var(--gcp)}
-.price-card h3{font-size:1.05rem;margin-bottom:16px}
-.price-card ol{padding-left:18px;color:var(--text-dim);font-size:.87rem}
-.price-card li{margin-bottom:10px}
-.price-card .adv{margin-top:16px;padding-top:16px;border-top:1px solid var(--line-soft);font-size:.83rem;color:var(--text-mute);font-family:var(--mono)}
-
-/* ============ SUSTAINABILITY ============ */
-.sus-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:26px}
-.sus-card .target{font-family:var(--disp);font-size:1.3rem;margin:10px 0 12px}
-.sus-card p{font-size:.87rem;color:var(--text-dim)}
-.pue-bar{height:8px;border-radius:6px;background:var(--panel-2);overflow:hidden;margin-top:14px}
-.pue-bar i{display:block;height:100%;background:var(--aws)}
-
-/* ============ OUTLOOK ============ */
-.outlook{background:linear-gradient(160deg, var(--panel) 0%, var(--panel-2) 100%);border:1px solid var(--line);border-radius:var(--r);padding:48px}
-.outlook h2{font-size:clamp(1.5rem,3vw,2.1rem);margin-bottom:20px;max-width:760px}
-.outlook p{color:var(--text-dim);max-width:760px;margin-bottom:16px}
-.pillars{display:flex;gap:14px;margin-top:28px;flex-wrap:wrap}
-.pillar{font-family:var(--mono);font-size:.76rem;padding:10px 16px;border:1px solid var(--line);border-radius:999px;color:var(--text-dim)}
-
-/* ============ FOOTER ============ */
-footer{padding:80px 0 60px;border-top:1px solid var(--line);margin-top:40px}
-.footer-grid{display:flex;justify-content:space-between;gap:40px;flex-wrap:wrap;margin-bottom:40px}
-.footer-grid h3{font-size:1.1rem;margin-bottom:10px}
-.footer-grid p{color:var(--text-dim);font-size:.9rem;max-width:420px}
-.footer-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
-.footer-links a{font-family:var(--mono);font-size:.74rem;color:var(--text-dim);border:1px solid var(--line);padding:8px 14px;border-radius:999px;text-decoration:none;transition:.2s}
-.footer-links a:hover{border-color:var(--azure);color:var(--text)}
-details{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:20px 24px}
-details summary{cursor:pointer;font-family:var(--mono);font-size:.8rem;color:var(--text-dim);letter-spacing:.03em}
-details[open] summary{margin-bottom:16px}
-.refs{font-family:var(--mono);font-size:.74rem;color:var(--text-mute);line-height:2;max-height:340px;overflow-y:auto;padding-right:8px}
-.refs::-webkit-scrollbar{width:6px}
-.refs::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
-.copyright{margin-top:36px;font-family:var(--mono);font-size:.72rem;color:var(--text-mute);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
-
-/* reveal-on-scroll */
-.reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease, transform .7s ease}
-.reveal.in{opacity:1;transform:translateY(0)}
-
-/* radar wrap */
-.radar-wrap{display:grid;grid-template-columns:1.2fr 1fr;gap:32px;align-items:center}
-@media (max-width:900px){.radar-wrap{grid-template-columns:1fr}}
-.radar-controls label{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:.82rem;padding:12px 0;border-top:1px solid var(--line-soft);cursor:pointer}
-.radar-controls label:first-child{border-top:none}
-.radar-controls input{accent-color:var(--azure);width:15px;height:15px}
-</style>
-</head>
-<body>
-
-<div class="bg-grid"></div>
-<div class="progress" id="progress"></div>
-
-<nav class="rail" id="rail">
-  <button data-target="hero" class="active">Hero</button>
-  <button data-target="overview">Market</button>
-  <button data-target="services">Services</button>
-  <button data-target="strengths">Strengths</button>
-  <button data-target="cases">Cases</button>
-  <button data-target="innovation">Innovation</button>
-  <button data-target="economics">Economics</button>
-  <button data-target="sustainability">Sustainability</button>
-  <button data-target="outlook">Outlook</button>
-</nav>
-
-<main>
-
-  <!-- ============ HERO ============ -->
-  <section class="hero" id="hero">
-    <div class="wrap">
-      <div class="hero-kicker">Technology Research Paper &nbsp;·&nbsp; IN6237 Cloud Computing &amp; Infrastructure &nbsp;·&nbsp; Nanyang Technological University</div>
-      <h1>Dominance <span class="accent-azure">&amp;</span> Differentiation</h1>
-      <p class="hero-sub">A data-driven comparative analysis of how <span class="accent-aws">AWS</span>, <span class="accent-azure">Azure</span>, and <span class="accent-gcp">Google Cloud</span> compete for a market on track to hit <strong style="color:var(--text)">$2 trillion by 2030</strong> — dissecting market share, service strategy, and the technologies shaping the next decade of the cloud oligopoly.</p>
-
-      <div class="hero-meta">
-        <div><strong>Jason Khoo</strong>Author &amp; Analyst</div>
-        <div><strong>G2405638F</strong>Candidate ID</div>
-        <div><strong>Semester 1, AY25/26</strong>MSc in Information Systems (MSIS) Programme</div>
-        <div><strong>Mr Wong Twee Wee</strong>Instructor</div>
-      </div>
-
-      <div class="skyline" id="skyline">
-        <div class="tower aws"><div class="bar"></div><div class="pct">33%</div><div class="label">AWS · Q4 2024</div></div>
-        <div class="tower azure"><div class="bar"></div><div class="pct">20%</div><div class="label">AZURE · Q4 2024</div></div>
-        <div class="tower gcp"><div class="bar"></div><div class="pct">10%</div><div class="label">GCP · Q4 2024</div></div>
-        <div class="skyline-caption">Global cloud infrastructure market share, Canalys/Statista 2025</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ MARKET OVERVIEW ============ -->
-  <section id="overview">
-    <div class="wrap">
-      <div class="section-head reveal">
-        <div class="eyebrow">01 — Market Overview</div>
-        <h2>An oligopoly compounding at 18% a year</h2>
-        <p>End-user spending on public cloud has more than doubled since 2020, and the "Big Three" have quietly tightened their grip — from 58% of the market to 63% by Q4 2024, even as the overall pie keeps growing.</p>
-      </div>
-
-      <div class="stat-strip reveal">
-        <div><div class="num">$723B</div><div class="lbl">EST. 2025 END-USER SPEND</div></div>
-        <div><div class="num">~18%</div><div class="lbl">SPENDING CAGR, 2020–25</div></div>
-        <div><div class="num">63%</div><div class="lbl">"BIG THREE" MARKET SHARE, Q4'24</div></div>
-        <div><div class="num">$2T</div><div class="lbl">PROJECTED MARKET BY 2030</div></div>
-      </div>
-
-      <div class="grid-2" style="margin-top:24px">
-        <div class="chart-card reveal">
-          <div class="chart-head">
-            <div>
-              <h3>Public cloud end-user spending</h3>
-              <div class="eyebrow" style="margin:6px 0 0">Worldwide, US$ billions</div>
-            </div>
-          </div>
-          <canvas id="spendChart" height="220"></canvas>
-          <div class="note">Source: Gartner, via Statista (2024)</div>
-        </div>
-        <div class="chart-card reveal">
-          <div class="chart-head">
-            <div>
-              <h3>Vendor market share</h3>
-              <div class="eyebrow" style="margin:6px 0 0">Q4 2020 – Q4 2024</div>
-            </div>
-          </div>
-          <canvas id="shareChart" height="220"></canvas>
-          <div class="note">Source: Canalys &amp; Statista (2025)</div>
-        </div>
-      </div>
-
-      <div class="chart-card reveal" style="margin-top:20px">
-        <div class="chart-head">
-          <div>
-            <h3>Revenue &amp; year-over-year growth</h3>
-            <div class="eyebrow" style="margin:6px 0 0">US$ billions, bars = revenue · lines = YoY %</div>
-          </div>
-          <div class="legend-row">
-            <span><i class="dot aws"></i>AWS</span>
-            <span><i class="dot azure"></i>Microsoft Intelligent Cloud (Azure)</span>
-            <span><i class="dot gcp"></i>Google Cloud</span>
-          </div>
-        </div>
-        <canvas id="revenueChart" height="230"></canvas>
-        <div class="note">AWS leads on revenue ($107.6B, 2024) but its growth has slowed to 19% YoY, suggesting a shift toward monetisation. GCP trails on scale but leads on growth (31% YoY) — the profile of a challenger still spending to win share. Source: Amazon, Alphabet, Microsoft company filings via Statista (2025).</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ SERVICES ============ -->
-  <section id="services">
-    <div class="wrap">
-      <div class="section-head reveal">
-        <div class="eyebrow">02 — Core Service Offerings</div>
-        <h2>Same building blocks, different philosophies</h2>
-        <p>Compute, storage, and AI are table stakes for all three providers — the differentiation shows up in how each is engineered. Toggle between categories to compare.</p>
-      </div>
-
-      <div class="tabs reveal" id="svcTabs">
-        <button data-tab="compute" class="active">Compute</button>
-        <button data-tab="storage">Storage &amp; Database</button>
-        <button data-tab="ai">AI &amp; ML</button>
-      </div>
-
-      <div class="reveal">
-        <div class="tab-panel active" data-panel="compute">
-          <div class="svc-table">
-            <div class="cell"><span class="tag aws">AWS</span><h4 style="margin-top:12px">EC2 + EKS/ECS + Lambda</h4><p>Widest VM family spread (general/compute/memory/storage-optimised, accelerated). Mature container and serverless stack suited for everything from HPC to microservices.</p></div>
-            <div class="cell"><span class="tag azure">Azure</span><h4 style="margin-top:12px">Virtual Machines + AKS + Functions</h4><p>Windows-optimised VMs and Azure Boost performance tuning. Arc-enabled AKS bridges on-prem and cloud, with native GitHub CI/CD.</p></div>
-            <div class="cell"><span class="tag gcp">GCP</span><h4 style="margin-top:12px">Compute Engine + GKE + Cloud Run</h4><p>Custom machine types, preemptible pricing, and live migration. As the Kubernetes originator, GKE Autopilot leads on container automation.</p></div>
-          </div>
-          <p class="svc-note">AWS wins on breadth, Azure on hybrid/enterprise alignment, GCP on infrastructure flexibility and Kubernetes-native tooling.</p>
-        </div>
-        <div class="tab-panel" data-panel="storage">
-          <div class="svc-table">
-            <div class="cell"><span class="tag aws">AWS</span><h4 style="margin-top:12px">S3 · EBS · EFS · RDS/Aurora</h4><p>Durable object storage, high-performance block storage for critical workloads, and Aurora for scalable relational databases with replication.</p></div>
-            <div class="cell"><span class="tag azure">Azure</span><h4 style="margin-top:12px">Blob · Managed Disks · Azure Files · SQL DB</h4><p>Tiered storage with fine-grained access control, disks integrated directly with VMs, and SQL Database built for hybrid, Windows-centric environments.</p></div>
-            <div class="cell"><span class="tag gcp">GCP</span><h4 style="margin-top:12px">Cloud Storage · Persistent Disk · Spanner/Cloud SQL</h4><p>Multi-regional storage built for global consistency, and Spanner — a horizontally-scalable relational database rare among the three.</p></div>
-          </div>
-          <p class="svc-note">GCP's Spanner is the standout: globally consistent relational data at scale, a genuinely hard problem the other two don't solve the same way.</p>
-        </div>
-        <div class="tab-panel" data-panel="ai">
-          <div class="svc-table">
-            <div class="cell"><span class="tag aws">AWS</span><h4 style="margin-top:12px">SageMaker · Bedrock</h4><p>End-to-end ML lifecycle tooling plus Rekognition, Comprehend, Polly for rapid task implementation. Bedrock offers multi-model access without infra management.</p></div>
-            <div class="cell"><span class="tag azure">Azure</span><h4 style="margin-top:12px">Azure ML · Azure OpenAI Service</h4><p>MLOps pipelines and model registry, paired with Azure AI Services that lower the barrier for non-technical teams.</p></div>
-            <div class="cell"><span class="tag gcp">GCP</span><h4 style="margin-top:12px">Vertex AI · Gemini · BigQuery</h4><p>Unified workflow with direct access to Gemini foundation models, AutoML, and deep integration with BigQuery for analytics-driven AI.</p></div>
-          </div>
-          <p class="svc-note">This is GCP's home turf — the tightest link between data warehousing (BigQuery) and model development of the three platforms.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ STRENGTHS RADAR ============ -->
-  <section id="strengths">
-    <div class="wrap">
-      <div class="section-head reveal">
-        <div class="eyebrow">03 — Strategic Positioning</div>
-        <h2>Three different bets on where cloud value goes next</h2>
-        <p>A qualitative synthesis of each provider's strategic posture across six dimensions, based on the service, pricing, and case-study evidence in this analysis. Toggle providers on and off to compare shapes.</p>
-      </div>
-
-      <div class="radar-wrap reveal">
-        <div class="chart-card">
-          <canvas id="radarChart" height="320"></canvas>
-          <div class="note">Author's qualitative synthesis (1–5 scale), not an official vendor benchmark — derived from the service, pricing, and case-study evidence in this paper.</div>
-        </div>
-        <div class="radar-controls panel">
-          <label><input type="checkbox" data-provider="0" checked><span class="tag aws">AWS</span>&nbsp; The generalist — broadest catalogue, most flexible pricing.</label>
-          <label><input type="checkbox" data-provider="1" checked><span class="tag azure">Azure</span>&nbsp; The enterprise fortress — hybrid, compliance, Microsoft lock-in.</label>
-          <label><input type="checkbox" data-provider="2" checked><span class="tag gcp">GCP</span>&nbsp; The specialist — AI, analytics, and 24/7 clean energy leadership.</label>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ CASE STUDIES ============ -->
-  <section id="cases">
-    <div class="wrap">
-      <div class="section-head reveal">
-        <div class="eyebrow">04 — Industry Verticals</div>
-        <h2>From generic infrastructure to sector-specific bets</h2>
-        <p>Competition is shifting from raw capacity to industry specialisation. Three flagship deployments make the strategic differences concrete.</p>
-      </div>
-
-      <div class="grid-3 reveal">
-        <div class="case-card aws">
-          <span class="tag aws">AWS · Media &amp; Entertainment</span>
-          <div class="co">Netflix</div>
-          <div class="metric">200M+</div>
-          <div class="metric-lbl">SUBSCRIBERS SERVED GLOBALLY</div>
-          <p>Global low-latency delivery across the full AWS stack — compute, storage, analytics, ML — hardened by chaos-engineering tools like Chaos Monkey for continuous availability.</p>
-        </div>
-        <div class="case-card azure">
-          <span class="tag azure">Azure · Infrastructure Engineering</span>
-          <div class="co">Bentley Systems × Minnesota DOT</div>
-          <div class="metric">40%</div>
-          <div class="metric-lbl">COST SAVINGS PER BRIDGE INSPECTION</div>
-          <p>Digital-twin inspection via Azure Mixed Reality / HoloLens 2, projecting roughly USD 4M in annual savings for the Minnesota Department of Transportation.</p>
-        </div>
-        <div class="case-card gcp">
-          <span class="tag gcp">GCP · Financial Services</span>
-          <div class="co">HSBC</div>
-          <div class="metric">16×</div>
-          <div class="metric-lbl">FASTER RISK SCENARIO MODELLING</div>
-          <p>A Risk Advisory Tool built on GCP cut "what-if" scenario simulation time down to roughly 15 minutes, enabling real-time intraday risk management.</p>
-        </div>
-      </div>
-
-      <div class="grid-3 reveal" style="margin-top:20px">
-        <div class="case-card aws">
-          <span class="tag aws">AWS · Public Sector</span>
-          <div class="co">GovCloud (US)</div>
-          <div class="metric">FedRAMP High</div>
-          <div class="metric-lbl">+ ITAR-COMPLIANT ISOLATION</div>
-          <p>Full US data sovereignty — processing and storage confined to the US, access limited to screened US entities and US Persons.</p>
-        </div>
-        <div class="case-card azure">
-          <span class="tag azure">Azure · Healthcare</span>
-          <div class="co">Azure Health Data Services</div>
-          <div class="metric">FHIR / DICOM</div>
-          <div class="metric-lbl">NATIVE INTEROP STANDARDS</div>
-          <p>Purpose-built for protected health information, with de-identification for secondary use and SAS integration for real-time clinical analytics.</p>
-        </div>
-        <div class="case-card gcp">
-          <span class="tag gcp">GCP · Retail</span>
-          <div class="co">The Home Depot</div>
-          <div class="metric">15PB+</div>
-          <div class="metric-lbl">SCALED FROM A 450TB WAREHOUSE</div>
-          <p>Migration to BigQuery now powers sales forecasting and real-time performance scorecards across 2,200+ stores.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ INNOVATION ============ -->
-  <section id="innovation">
-    <div class="wrap">
-      <div class="section-head reveal">
-        <div class="eyebrow">05 — Technology &amp; Innovation</div>
-        <h2>Where the next decade of differentiation gets built</h2>
-        <p>Beyond core infrastructure, all three are racing across three frontiers: AI-native operations, quantum computing, and the edge.</p>
-      </div>
-
-      <div class="grid-3 reveal">
-        <div class="innov-card">
-          <h3>AI-Powered Cloud Operations</h3>
-          <div class="sub">Generative AI embedded into the console itself</div>
-          <ul>
-            <li><b>AWS</b> — Amazon Q generates IaC, explains errors, and automates troubleshooting across console, CLI and IDE.</li>
-            <li><b>Azure</b> — Copilot for Azure produces deployment scripts (CLI/PowerShell/Terraform) and monitors cost and security posture.</li>
-            <li><b>GCP</b> — Gemini Cloud Assist &amp; Code Assist pair natural-language design with contextual, IDE-native coding help.</li>
-          </ul>
-        </div>
-        <div class="innov-card">
-          <h3>Quantum Computing</h3>
-          <div class="sub">Experimental, but strategically staked out</div>
-          <ul>
-            <li><b>AWS Braket</b> — multi-hardware access; used by BMW for material deformation and quality-assessment simulation.</li>
-            <li><b>Azure Quantum</b> — enterprise-integration play, benchmarking portfolio and fleet optimisation with KPMG.</li>
-            <li><b>GCP Willow chip</b> — a benchmark in minutes that would take a classical supercomputer 10 septillion years.</li>
-          </ul>
-        </div>
-        <div class="innov-card">
-          <h3>Edge Computing</h3>
-          <div class="sub">Bringing compute to where data is created</div>
-          <ul>
-            <li><b>AWS Wavelength</b> — cut Verizon/NHL video delivery latency from seconds to milliseconds.</li>
-            <li><b>Azure Edge Zones</b> — piloted beyond-visual-line-of-sight autonomous drone control with AT&amp;T and EVA over 5G.</li>
-            <li><b>Google Distributed Cloud Edge</b> — powers Kroger's frictionless checkout and real-time inventory monitoring.</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ ECONOMICS ============ -->
-  <section id="economics">
-    <div class="wrap">
-      <div class="section-head reveal">
-        <div class="eyebrow">06 — Economics &amp; Strategy</div>
-        <h2>Pricing as a lever, not just a price tag</h2>
-        <p>All three run pay-as-you-go at the core, but the discount architecture around it reveals who they're really optimising for.</p>
-      </div>
-
-      <div class="grid-3 reveal">
-        <div class="price-card aws">
-          <h3><span class="tag aws">AWS</span></h3>
-          <ol>
-            <li><b>Savings Plans</b> — flexible commitment by spend, not instance type.</li>
-            <li><b>Reserved Instances</b> — 1–3yr terms, up to 72% off + zone capacity reservation.</li>
-            <li><b>Spot Instances</b> — up to 90% off unused capacity, short-term.</li>
-          </ol>
-          <div class="adv">→ Developer-centric flexibility across services &amp; regions.</div>
-        </div>
-        <div class="price-card azure">
-          <h3><span class="tag azure">Azure</span></h3>
-          <ol>
-            <li><b>Hybrid Benefit</b> — reuse existing Windows/SQL licences for savings.</li>
-            <li><b>Reserved VMs</b> — up to 72% off, stackable to 80% with Hybrid Benefit.</li>
-            <li><b>Spot VMs</b> — up to 90% off, mirroring AWS's model.</li>
-          </ol>
-          <div class="adv">→ Outsized value if you're already a Microsoft shop.</div>
-        </div>
-        <div class="price-card gcp">
-          <h3><span class="tag gcp">GCP</span></h3>
-          <ol>
-            <li><b>Sustained Use Discounts</b> — automatic, no commitment required.</li>
-            <li><b>Committed Use Discounts</b> — 1–3yr terms, up to 79% off.</li>
-            <li><b>Preemptible VMs</b> — up to 91% off, the deepest of the three.</li>
-          </ol>
-          <div class="adv">→ Rewards steady analytics/data workloads by default.</div>
-        </div>
-      </div>
-
-      <div class="grid-3 reveal" style="margin-top:20px">
-        <div class="panel">
-          <h4 style="font-size:.95rem">AWS Partner Network</h4>
-          <div class="stat-strip" style="grid-template-columns:1fr 1fr;margin-top:14px">
-            <div style="padding:16px"><div class="num" style="font-size:1.4rem">140K+</div><div class="lbl">PARTNERS</div></div>
-            <div style="padding:16px"><div class="num" style="font-size:1.4rem">$6.40</div><div class="lbl">REVENUE MULTIPLIER / $1</div></div>
-          </div>
-          <p style="font-size:.85rem;color:var(--text-dim);margin-top:14px">Largest, most mature ecosystem — scale that's harder for smaller partners to stand out within.</p>
-        </div>
-        <div class="panel">
-          <h4 style="font-size:.95rem">Azure AI Cloud Partner Program</h4>
-          <p style="font-size:.85rem;color:var(--text-dim);margin-top:14px">Embeds system integrators and ISVs inside the Microsoft ecosystem — strong cross-sell, but partners inherit exposure to Microsoft's own licensing shifts.</p>
-        </div>
-        <div class="panel">
-          <h4 style="font-size:.95rem">GCP Partner Advantage</h4>
-          <p style="font-size:.85rem;color:var(--text-dim);margin-top:14px">Smaller, more targeted — dedicated advisors and specialisation tracks over sheer scale, built for rapid niche-sector adoption.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ SUSTAINABILITY ============ -->
-  <section id="sustainability">
-    <div class="wrap">
-      <div class="section-head reveal">
-        <div class="eyebrow">07 — Sustainability</div>
-        <h2>Data centres are projected to hit 20% of global electricity demand</h2>
-        <p>Left unmanaged, hyperscale growth accelerates climate impact and drives up cooling costs. Each provider is racing toward a different definition of "clean."</p>
-      </div>
-
-      <div class="grid-3 reveal">
-        <div class="sus-card">
-          <span class="tag aws">AWS</span>
-          <div class="target">Net-zero by 2040</div>
-          <p>Water-positive by 2030. Reengineered power distribution and liquid cooling lifted efficiency — global PUE of 1.15 in 2023, with the best site at 1.04.</p>
-          <div class="pue-bar"><i style="width:87%"></i></div>
-          <p style="margin-top:8px;font-family:var(--mono);font-size:.7rem;color:var(--text-mute)">PUE 1.15 avg (1.00 = perfect efficiency)</p>
-        </div>
-        <div class="sus-card">
-          <span class="tag azure">Microsoft / Azure</span>
-          <div class="target">Carbon-negative by 2030</div>
-          <p>Water-positive and zero-waste by the same year. Wind-linked batteries in Ireland, surplus heat warming 6,000 Danish homes, and free-air cooling in Sweden cutting energy 30% and water 90%.</p>
-        </div>
-        <div class="sus-card">
-          <span class="tag gcp">GCP</span>
-          <div class="target">Net-zero by 2030</div>
-          <p>The most aggressive target — net-zero across operations and the full supply chain, powered by 24/7 carbon-free energy via co-located renewable projects with Intersect Power.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ OUTLOOK ============ -->
-  <section id="outlook">
-    <div class="wrap">
-      <div class="section-head reveal">
-        <div class="eyebrow">08 — Outlook</div>
-        <h2>No single winner — a diversifying oligopoly</h2>
-      </div>
-      <div class="outlook reveal">
-        <h2>Agentic AI is the next inflection point</h2>
-        <p>Amazon Bedrock &amp; Q, Azure OpenAI Service, and Gemini/Vertex AI are all converging toward systems that can autonomously plan, reason, and execute — not just respond. This is where the next wave of platform differentiation will play out.</p>
-        <p>Rather than a single winner, expect continued divergence along each provider's proven strengths: <b style="color:var(--aws)">AWS</b> on breadth and developer reach, <b style="color:var(--azure)">Azure</b> on regulated-enterprise compliance, <b style="color:var(--gcp)">GCP</b> on data-driven, analytics-heavy innovation.</p>
-        <div class="pillars">
-          <div class="pillar">◆ Intelligence — agentic AI &amp; foundation models</div>
-          <div class="pillar">◆ Sustainability — 24/7 carbon-free operations</div>
-          <div class="pillar">◆ Automation — AI-native cloud operations</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ FOOTER ============ -->
-  <footer>
-    <div class="wrap">
-      <div class="footer-grid reveal">
-        <div>
-          <h3>About this analysis</h3>
-          <p>Originally submitted as a Technology Research Paper for IN6237 Cloud Computing &amp; Infrastructure at Nanyang Technological University, and adapted here as an interactive portfolio piece demonstrating data synthesis, visualisation, and technical storytelling for data science &amp; data engineering roles.</p>
-          <div class="footer-links">
-            <a href="mailto:jkhooyh@gmail.com">jkhooyh@gmail.com</a>
-            <a href="https://www.linkedin.com/in/jasonkhooyh/">LinkedIn</a>
-            <a href="https://github.com/jasonkyh">GitHub</a>
-          </div>
-        </div>
-        <div style="min-width:260px;flex:1;max-width:420px">
-          <details>
-            <summary>▸ Sources &amp; references (34)</summary>
-            <div class="refs">
-              Alphabet (2025). Google Cloud Platform revenues, via Statista.<br>
-              Amazon (2025). Net sales revenue by segment, via Statista.<br>
-              AWS (n.d.). Reserved Instances / Spot / Savings Plans pricing docs.<br>
-              Azure (2022, n.d.). Health Data Services; FHIR/SAS integration; Hybrid Benefit; Reserved &amp; Spot VMs.<br>
-              Bains, P. (2025). AWS Partner Profitability Framework. AWS Blog.<br>
-              Buyya, R. et al. (2024). Energy-efficiency &amp; sustainability in cloud computing. Software: Practice &amp; Experience.<br>
-              Canalys &amp; Statista (2025). Cloud infrastructure vendor market share.<br>
-              Dalager, B. (2021). Building on quantum advantage. KPMG.<br>
-              DynaTech Systems (2025). AWS vs Azure vs Google Cloud comparison.<br>
-              Gartner (2024). Public cloud services end-user spending, via Statista.<br>
-              Goldman Sachs Research (2024). Cloud revenues poised to reach $2T by 2030.<br>
-              Goodison, D. (2019). Google Cloud Partner Advantage. CRN.<br>
-              Google (2025, n.d.). Gemini Cloud Assist; Home Depot &amp; HSBC case studies; CUD/SUD/preemptible pricing docs.<br>
-              Jenkins, B. (2025). Amazon Q Developer experience. AWS Blog.<br>
-              Kadam, M. (2024). Netflix and AWS case study. Bacancy.<br>
-              King, C. (2024). AWS data centre sustainability. Sustainability Magazine.<br>
-              Koenig, C. (2021). BMW Group Quantum Computing Challenge.<br>
-              Krishnakumar, V. (2025). Azure Arc hybrid management. CloudOptimo.<br>
-              Larbi, S. &amp; Vanama, V. (2023). Google Distributed Cloud Edge retail use cases.<br>
-              Manor, E. (2020). Anthos multi-cloud. Google Cloud Blog.<br>
-              McKinsey &amp; Company (2024). What is cloud computing?<br>
-              Microsoft (2024, 2025, n.d.). Segment revenue via Statista; Copilot in Azure; Bentley Systems case study.<br>
-              Mwiti, D. (2025). AWS Outposts explained. DataCamp.<br>
-              Nakagawa, M. (2024). Sustainable by design. Microsoft Blog.<br>
-              Neven, H. (2024). Meet Willow. Google Blog.<br>
-              Richter, F. (2025). The Big Three Stay Ahead. Statista.<br>
-              Siddiqui, L. (2024). AWS vs Azure vs GCP comparison. DataCamp.<br>
-              Sneha et al. (2023). Green Cloud Computing. Springer.<br>
-              Susnjara, S. &amp; Smalley, I. (2025). What is Cloud Computing? IBM.<br>
-              The Cloud Native Experts (2024). AWS GovCloud basics. Aqua.<br>
-              Verizon Sourcing LLC (2024). Verizon/AWS/NHL 5G broadcasting.<br>
-              Wheeler, K. (2024). Google's AI &amp; sustainable cloud. Technology Magazine.<br>
-              Wickramasinghe, S. (2024). AWS vs Azure vs GCP. BMC Blogs.<br>
-              Zander, J. (2021). Microsoft/AT&amp;T 5G edge. Azure Blog.
-            </div>
-          </details>
-        </div>
-      </div>
-      <div class="copyright">
-        <span>© 2026 Jason Khoo — Prepared for IN6237, Nanyang Technological University</span>
-        <span>Built with HTML, CSS &amp; Chart.js</span>
-      </div>
-    </div>
-  </footer>
-
-</main>
-
-<script>
-/* ============ SCROLL PROGRESS + NAV ============ */
-const progress = document.getElementById('progress');
-const sections = [...document.querySelectorAll('main section')];
-const railBtns = [...document.querySelectorAll('nav.rail button')];
-
-function onScroll(){
-  const h = document.documentElement;
-  const pct = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
-  progress.style.width = pct + '%';
-
-  let current = sections[0].id;
-  for(const s of sections){
-    const r = s.getBoundingClientRect();
-    if(r.top <= 140) current = s.id;
-  }
-  railBtns.forEach(b => b.classList.toggle('active', b.dataset.target === current));
-}
-document.addEventListener('scroll', onScroll, {passive:true});
-onScroll();
-
-railBtns.forEach(b => b.addEventListener('click', () => {
-  document.getElementById(b.dataset.target).scrollIntoView({behavior:'smooth'});
-}));
-
-/* ============ REVEAL ON SCROLL ============ */
-const io = new IntersectionObserver((entries) => {
-  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('in'); });
-}, {threshold:.15});
-document.querySelectorAll('.reveal').forEach(el => io.observe(el));
-
-/* ============ HERO SKYLINE ANIMATION ============ */
-const skyline = document.getElementById('skyline');
-const skyIo = new IntersectionObserver((entries) => {
-  entries.forEach(e => { if(e.isIntersecting){ skyline.classList.add('in'); skyIo.disconnect(); } });
-}, {threshold:.3});
-skyIo.observe(skyline);
-
-/* ============ TABS ============ */
-document.getElementById('svcTabs').addEventListener('click', (e) => {
-  const btn = e.target.closest('button');
-  if(!btn) return;
-  document.querySelectorAll('#svcTabs button').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.dataset.panel === btn.dataset.tab));
-});
-
-/* ============ CHART.JS GLOBAL DEFAULTS ============ */
-Chart.defaults.font.family = "'IBM Plex Mono', monospace";
-Chart.defaults.font.size = 11;
-Chart.defaults.color = '#93a5b8';
-const gridColor = 'rgba(255,255,255,.06)';
-const AWS = '#ffb454', AZURE = '#5eb3ff', GCP = '#48e0a5', OTHERS = '#3a4657';
-
-/* ---- Spending line chart ---- */
-new Chart(document.getElementById('spendChart'), {
-  type: 'line',
-  data: {
-    labels: ['2020','2021','2022','2023','2024','2025e'],
-    datasets: [{
-      label: 'End-user spend ($B)',
-      data: [314, 412.63, 478.32, 561.1, 595.65, 723.42],
-      borderColor: AZURE,
-      backgroundColor: 'rgba(94,179,255,.12)',
-      fill: true,
-      tension: .35,
-      pointBackgroundColor: AZURE,
-      pointRadius: 4,
-      borderWidth: 2.5
-    }]
-  },
-  options: {
-    plugins:{ legend:{display:false} },
-    scales:{
-      y:{ grid:{color:gridColor}, ticks:{callback:v=>'$'+v+'B'} },
-      x:{ grid:{display:false} }
-    }
-  }
-});
-
-/* ---- Market share stacked bar ---- */
-new Chart(document.getElementById('shareChart'), {
-  type: 'bar',
-  data: {
-    labels: ['2020','2021','2022','2023','2024'],
-    datasets: [
-      {label:'AWS', data:[31,33,32,31,33], backgroundColor:AWS, stack:'s'},
-      {label:'Azure', data:[20,22,23,26,20], backgroundColor:AZURE, stack:'s'},
-      {label:'GCP', data:[7,9,10,10,10], backgroundColor:GCP, stack:'s'},
-      {label:'Others', data:[42,36,35,33,37], backgroundColor:OTHERS, stack:'s'}
-    ]
-  },
-  options: {
-    plugins:{ legend:{display:false} },
-    scales:{
-      y:{ stacked:true, max:100, grid:{color:gridColor}, ticks:{callback:v=>v+'%'} },
-      x:{ stacked:true, grid:{display:false} }
-    }
-  }
-});
-
-/* ---- Revenue + YoY combo ---- */
-new Chart(document.getElementById('revenueChart'), {
-  data: {
-    labels: ['2020','2021','2022','2023','2024'],
-    datasets: [
-      {type:'bar', label:'AWS Revenue', data:[45.37,62.20,80.10,90.76,107.56], backgroundColor:AWS, order:2},
-      {type:'bar', label:'Azure Revenue', data:[48.37,60.08,75.25,87.91,105.36], backgroundColor:AZURE, order:2},
-      {type:'bar', label:'GCP Revenue', data:[13.06,19.21,26.29,33.09,43.23], backgroundColor:GCP, order:2},
-    ]
-  },
-  options:{
-    plugins:{ legend:{display:false} },
-    scales:{
-      y:{ grid:{color:gridColor}, ticks:{callback:v=>'$'+v+'B'} },
-      x:{ grid:{display:false} }
-    }
-  }
-});
-
-/* ---- Radar chart ---- */
-const radarLabels = ['Service Breadth','Enterprise / Hybrid Integration','AI & Analytics Leadership','Pricing Flexibility','Edge / Quantum Innovation','Sustainability Ambition'];
-const radarData = [
-  {label:'AWS', data:[5,3.5,4,4.5,4,3], border:AWS, bg:'rgba(255,180,84,.14)'},
-  {label:'Azure', data:[3.5,5,4,4.5,3.5,4.5], border:AZURE, bg:'rgba(94,179,255,.14)'},
-  {label:'GCP', data:[3,3.5,5,4.5,4.5,5], border:GCP, bg:'rgba(72,224,165,.14)'}
-];
-const radarChart = new Chart(document.getElementById('radarChart'), {
-  type:'radar',
-  data:{
-    labels: radarLabels,
-    datasets: radarData.map(d => ({
-      label:d.label, data:d.data, borderColor:d.border, backgroundColor:d.bg,
-      borderWidth:2, pointBackgroundColor:d.border, pointRadius:3
-    }))
-  },
-  options:{
-    plugins:{ legend:{display:false} },
-    scales:{
-      r:{
-        min:0, max:5,
-        grid:{color:gridColor}, angleLines:{color:gridColor},
-        pointLabels:{color:'#93a5b8', font:{size:10.5}},
-        ticks:{display:false, stepSize:1}
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dominance &amp; Differentiation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.0/chart.umd.min.js"></script>
+    <style>
+      /* ============ TOKENS ============ */
+      :root {
+        --void: #0a0e13;
+        --panel: #111823;
+        --panel-2: #141d29;
+        --line: #20303f;
+        --line-soft: #182330;
+        --text: #eef3f7;
+        --text-dim: #93a5b8;
+        --text-mute: #59697b;
+        --aws: #ffb454;
+        --aws-soft: rgba(255, 180, 84, 0.13);
+        --azure: #5eb3ff;
+        --azure-soft: rgba(94, 179, 255, 0.13);
+        --gcp: #48e0a5;
+        --gcp-soft: rgba(72, 224, 165, 0.13);
+        --others: #3a4657;
+        --r: 12px;
+        --maxw: 1120px;
+        --disp: "Space Grotesk", sans-serif;
+        --body: "IBM Plex Sans", sans-serif;
+        --mono: "IBM Plex Mono", monospace;
       }
-    }
-  }
-});
-document.querySelectorAll('.radar-controls input').forEach(inp => {
-  inp.addEventListener('change', () => {
-    const idx = +inp.dataset.provider;
-    radarChart.getDatasetMeta(idx).hidden = !inp.checked;
-    radarChart.update();
-  });
-});
-</script>
-</body>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+        * {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+      body {
+        background:
+          radial-gradient(
+            1100px 500px at 12% -10%,
+            rgba(94, 179, 255, 0.08),
+            transparent 60%
+          ),
+          radial-gradient(
+            900px 500px at 100% 10%,
+            rgba(255, 180, 84, 0.06),
+            transparent 55%
+          ),
+          var(--void);
+        color: var(--text);
+        font-family: var(--body);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        overflow-x: hidden;
+      }
+      .bg-grid {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+          linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0.028) 1px,
+            transparent 1px
+          );
+        background-size: 64px 64px;
+        mask-image: radial-gradient(
+          1200px 800px at 50% 0%,
+          #000 10%,
+          transparent 75%
+        );
+      }
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--disp);
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        color: var(--text);
+      }
+      .eyebrow {
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--text-mute);
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+        margin-bottom: 1rem;
+      }
+      .eyebrow::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--azure);
+        box-shadow: 0 0 10px var(--azure);
+      }
+      .mono {
+        font-family: var(--mono);
+      }
+      a {
+        color: inherit;
+      }
+
+      /* ============ LAYOUT ============ */
+      main {
+        position: relative;
+        z-index: 1;
+      }
+      .wrap {
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 0 28px;
+      }
+      section {
+        padding: 118px 0;
+      }
+      .section-head {
+        max-width: 640px;
+        margin-bottom: 56px;
+      }
+      .section-head h2 {
+        font-size: clamp(1.7rem, 3.4vw, 2.5rem);
+        line-height: 1.15;
+        margin-bottom: 16px;
+      }
+      .section-head p {
+        color: var(--text-dim);
+        font-size: 1.02rem;
+      }
+      .lede {
+        color: var(--text-dim);
+        max-width: 680px;
+        font-size: 1.05rem;
+      }
+
+      /* ============ PROGRESS + NAV ============ */
+      .progress {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 2px;
+        background: linear-gradient(
+          90deg,
+          var(--aws),
+          var(--azure),
+          var(--gcp)
+        );
+        z-index: 100;
+        width: 0%;
+      }
+      nav.rail {
+        position: fixed;
+        top: 22px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 90;
+        display: flex;
+        gap: 2px;
+        background: rgba(17, 24, 35, 0.75);
+        backdrop-filter: blur(14px);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 5px;
+      }
+      nav.rail button {
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.04em;
+        color: var(--text-mute);
+        background: none;
+        border: none;
+        padding: 8px 13px;
+        border-radius: 999px;
+        cursor: pointer;
+        transition:
+          color 0.25s,
+          background 0.25s;
+        white-space: nowrap;
+      }
+      nav.rail button:hover {
+        color: var(--text);
+      }
+      nav.rail button.active {
+        color: var(--void);
+        background: var(--text);
+      }
+      @media (max-width: 900px) {
+        nav.rail {
+          display: none;
+        }
+      }
+
+      /* ============ HERO ============ */
+      .hero {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 160px 0 80px;
+        position: relative;
+      }
+      .hero-kicker {
+        font-family: var(--mono);
+        font-size: 0.78rem;
+        color: var(--text-mute);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        margin-bottom: 22px;
+      }
+      .hero h1 {
+        font-size: clamp(2.6rem, 6.4vw, 5rem);
+        line-height: 1.03;
+        max-width: 920px;
+      }
+      .hero h1 .accent-aws {
+        color: var(--aws);
+      }
+      .hero h1 .accent-azure {
+        color: var(--azure);
+      }
+      .hero h1 .accent-gcp {
+        color: var(--gcp);
+      }
+      .hero-sub {
+        margin-top: 26px;
+        font-size: 1.18rem;
+        color: var(--text-dim);
+        max-width: 600px;
+      }
+      .hero-meta {
+        margin-top: 44px;
+        display: flex;
+        gap: 36px;
+        flex-wrap: wrap;
+        font-family: var(--mono);
+        font-size: 0.82rem;
+        color: var(--text-mute);
+      }
+      .hero-meta strong {
+        color: var(--text);
+        display: block;
+        font-family: var(--body);
+        font-weight: 600;
+        font-size: 0.95rem;
+      }
+
+      .skyline {
+        margin-top: 70px;
+        display: flex;
+        align-items: flex-end;
+        gap: 28px;
+        height: 230px;
+        max-width: 640px;
+        position: relative;
+      }
+      .tower {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        position: relative;
+      }
+      .tower .bar {
+        width: 100%;
+        height: 4px;
+        border-radius: 6px 6px 0 0;
+        position: relative;
+        overflow: hidden;
+        transition: height 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+        background-image: repeating-linear-gradient(
+          180deg,
+          rgba(0, 0, 0, 0.35) 0 1px,
+          transparent 1px 9px
+        );
+      }
+      .tower.aws .bar {
+        background-color: var(--aws);
+      }
+      .tower.azure .bar {
+        background-color: var(--azure);
+      }
+      .tower.gcp .bar {
+        background-color: var(--gcp);
+      }
+      .skyline.in .tower.aws .bar {
+        height: 198px;
+      }
+      .skyline.in .tower.azure .bar {
+        height: 120px;
+      }
+      .skyline.in .tower.gcp .bar {
+        height: 60px;
+      }
+      .tower .label {
+        margin-top: 12px;
+        font-family: var(--mono);
+        font-size: 0.74rem;
+        color: var(--text-mute);
+      }
+      .tower .pct {
+        font-family: var(--disp);
+        font-size: 1.5rem;
+        color: var(--text);
+        margin-top: 2px;
+      }
+      .skyline-caption {
+        position: absolute;
+        right: 0;
+        bottom: -38px;
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        color: var(--text-mute);
+      }
+
+      /* ============ CARDS / PANELS ============ */
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        padding: 28px;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+      }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      @media (max-width: 900px) {
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .grid-2 {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .stat-strip {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1px;
+        background: var(--line);
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+        margin-top: 20px;
+      }
+      .stat-strip div {
+        background: var(--panel);
+        padding: 22px 20px;
+      }
+      .stat-strip .num {
+        font-family: var(--disp);
+        font-size: 1.9rem;
+        color: var(--text);
+      }
+      .stat-strip .lbl {
+        font-family: var(--mono);
+        font-size: 0.7rem;
+        color: var(--text-mute);
+        margin-top: 6px;
+        letter-spacing: 0.03em;
+      }
+      @media (max-width: 900px) {
+        .stat-strip {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      .chart-card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        padding: 26px;
+      }
+      .chart-card .chart-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin-bottom: 18px;
+      }
+      .chart-card h3 {
+        font-size: 1.05rem;
+      }
+      .chart-card .note {
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        color: var(--text-mute);
+        margin-top: 14px;
+      }
+      canvas {
+        max-width: 100%;
+      }
+
+      .toggle-group {
+        display: flex;
+        gap: 6px;
+        background: var(--panel-2);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 4px;
+      }
+      .toggle-group button {
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        padding: 7px 14px;
+        border-radius: 999px;
+        border: none;
+        background: none;
+        color: var(--text-mute);
+        cursor: pointer;
+        transition: 0.2s;
+      }
+      .toggle-group button.active {
+        background: var(--text);
+        color: var(--void);
+      }
+
+      /* legend chips */
+      .legend-row {
+        display: flex;
+        gap: 18px;
+        flex-wrap: wrap;
+        font-family: var(--mono);
+        font-size: 0.74rem;
+        color: var(--text-dim);
+      }
+      .legend-row span {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+      .dot.aws {
+        background: var(--aws);
+      }
+      .dot.azure {
+        background: var(--azure);
+      }
+      .dot.gcp {
+        background: var(--gcp);
+      }
+      .dot.others {
+        background: var(--others);
+      }
+
+      /* provider tag */
+      .tag {
+        display: inline-block;
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 4px 10px;
+        border-radius: 6px;
+        border: 1px solid var(--line);
+      }
+      .tag.aws {
+        color: var(--aws);
+        border-color: var(--aws-soft);
+        background: var(--aws-soft);
+      }
+      .tag.azure {
+        color: var(--azure);
+        border-color: var(--azure-soft);
+        background: var(--azure-soft);
+      }
+      .tag.gcp {
+        color: var(--gcp);
+        border-color: var(--gcp-soft);
+        background: var(--gcp-soft);
+      }
+
+      /* ============ SERVICES TABS ============ */
+      .tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 26px;
+        flex-wrap: wrap;
+      }
+      .tabs button {
+        font-family: var(--mono);
+        font-size: 0.76rem;
+        padding: 9px 16px;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        color: var(--text-dim);
+        cursor: pointer;
+        transition: 0.2s;
+      }
+      .tabs button:hover {
+        border-color: var(--text-mute);
+      }
+      .tabs button.active {
+        background: var(--text);
+        color: var(--void);
+        border-color: var(--text);
+      }
+      .tab-panel {
+        display: none;
+      }
+      .tab-panel.active {
+        display: block;
+        animation: fadein 0.4s ease;
+      }
+      @keyframes fadein {
+        from {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .svc-table {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1px;
+        background: var(--line);
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        overflow: hidden;
+      }
+      .svc-table .cell {
+        background: var(--panel);
+        padding: 22px;
+      }
+      .svc-table .cell h4 {
+        font-size: 0.92rem;
+        margin-bottom: 10px;
+      }
+      .svc-table .cell p {
+        font-size: 0.87rem;
+        color: var(--text-dim);
+      }
+      @media (max-width: 900px) {
+        .svc-table {
+          grid-template-columns: 1fr;
+        }
+      }
+      .svc-note {
+        margin-top: 18px;
+        color: var(--text-dim);
+        font-size: 0.94rem;
+        max-width: 760px;
+      }
+
+      /* ============ CASE STUDIES ============ */
+      .case-card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        padding: 26px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        transition:
+          transform 0.3s,
+          border-color 0.3s;
+      }
+      .case-card:hover {
+        transform: translateY(-4px);
+        border-color: var(--text-mute);
+      }
+      .case-card .co {
+        font-family: var(--disp);
+        font-size: 1.15rem;
+      }
+      .case-card .metric {
+        font-family: var(--disp);
+        font-size: 2.1rem;
+        margin-top: 6px;
+      }
+      .case-card.aws .metric {
+        color: var(--aws);
+      }
+      .case-card.azure .metric {
+        color: var(--azure);
+      }
+      .case-card.gcp .metric {
+        color: var(--gcp);
+      }
+      .case-card .metric-lbl {
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        color: var(--text-mute);
+        margin-top: -8px;
+      }
+      .case-card p {
+        font-size: 0.9rem;
+        color: var(--text-dim);
+      }
+
+      /* ============ INNOVATION ============ */
+      .innov-card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        padding: 26px;
+      }
+      .innov-card h3 {
+        font-size: 1.05rem;
+        margin-bottom: 6px;
+      }
+      .innov-card .sub {
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        color: var(--text-mute);
+        margin-bottom: 16px;
+      }
+      .innov-card ul {
+        list-style: none;
+      }
+      .innov-card li {
+        font-size: 0.88rem;
+        color: var(--text-dim);
+        padding: 10px 0;
+        border-top: 1px solid var(--line-soft);
+      }
+      .innov-card li:first-child {
+        border-top: none;
+      }
+      .innov-card li b {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      /* ============ PRICING ============ */
+      .price-card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        padding: 26px;
+        border-top: 3px solid var(--line);
+      }
+      .price-card.aws {
+        border-top-color: var(--aws);
+      }
+      .price-card.azure {
+        border-top-color: var(--azure);
+      }
+      .price-card.gcp {
+        border-top-color: var(--gcp);
+      }
+      .price-card h3 {
+        font-size: 1.05rem;
+        margin-bottom: 16px;
+      }
+      .price-card ol {
+        padding-left: 18px;
+        color: var(--text-dim);
+        font-size: 0.87rem;
+      }
+      .price-card li {
+        margin-bottom: 10px;
+      }
+      .price-card .adv {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid var(--line-soft);
+        font-size: 0.83rem;
+        color: var(--text-mute);
+        font-family: var(--mono);
+      }
+
+      /* ============ SUSTAINABILITY ============ */
+      .sus-card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        padding: 26px;
+      }
+      .sus-card .target {
+        font-family: var(--disp);
+        font-size: 1.3rem;
+        margin: 10px 0 12px;
+      }
+      .sus-card p {
+        font-size: 0.87rem;
+        color: var(--text-dim);
+      }
+      .pue-bar {
+        height: 8px;
+        border-radius: 6px;
+        background: var(--panel-2);
+        overflow: hidden;
+        margin-top: 14px;
+      }
+      .pue-bar i {
+        display: block;
+        height: 100%;
+        background: var(--aws);
+      }
+
+      /* ============ OUTLOOK ============ */
+      .outlook {
+        background: linear-gradient(
+          160deg,
+          var(--panel) 0%,
+          var(--panel-2) 100%
+        );
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        padding: 48px;
+      }
+      .outlook h2 {
+        font-size: clamp(1.5rem, 3vw, 2.1rem);
+        margin-bottom: 20px;
+        max-width: 760px;
+      }
+      .outlook p {
+        color: var(--text-dim);
+        max-width: 760px;
+        margin-bottom: 16px;
+      }
+      .pillars {
+        display: flex;
+        gap: 14px;
+        margin-top: 28px;
+        flex-wrap: wrap;
+      }
+      .pillar {
+        font-family: var(--mono);
+        font-size: 0.76rem;
+        padding: 10px 16px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--text-dim);
+      }
+
+      /* ============ FOOTER ============ */
+      footer {
+        padding: 80px 0 60px;
+        border-top: 1px solid var(--line);
+        margin-top: 40px;
+      }
+      .footer-grid {
+        display: flex;
+        justify-content: space-between;
+        gap: 40px;
+        flex-wrap: wrap;
+        margin-bottom: 40px;
+      }
+      .footer-grid h3 {
+        font-size: 1.1rem;
+        margin-bottom: 10px;
+      }
+      .footer-grid p {
+        color: var(--text-dim);
+        font-size: 0.9rem;
+        max-width: 420px;
+      }
+      .footer-links {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 16px;
+      }
+      .footer-links a {
+        font-family: var(--mono);
+        font-size: 0.74rem;
+        color: var(--text-dim);
+        border: 1px solid var(--line);
+        padding: 8px 14px;
+        border-radius: 999px;
+        text-decoration: none;
+        transition: 0.2s;
+      }
+      .footer-links a:hover {
+        border-color: var(--azure);
+        color: var(--text);
+      }
+      details {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        padding: 20px 24px;
+      }
+      details summary {
+        cursor: pointer;
+        font-family: var(--mono);
+        font-size: 0.8rem;
+        color: var(--text-dim);
+        letter-spacing: 0.03em;
+      }
+      details[open] summary {
+        margin-bottom: 16px;
+      }
+      .refs {
+        font-family: var(--mono);
+        font-size: 0.74rem;
+        color: var(--text-mute);
+        line-height: 2;
+        max-height: 340px;
+        overflow-y: auto;
+        padding-right: 8px;
+      }
+      .refs::-webkit-scrollbar {
+        width: 6px;
+      }
+      .refs::-webkit-scrollbar-thumb {
+        background: var(--line);
+        border-radius: 3px;
+      }
+      .copyright {
+        margin-top: 36px;
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        color: var(--text-mute);
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      /* reveal-on-scroll */
+      .reveal {
+        opacity: 0;
+        transform: translateY(22px);
+        transition:
+          opacity 0.7s ease,
+          transform 0.7s ease;
+      }
+      .reveal.in {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* radar wrap */
+      .radar-wrap {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: 32px;
+        align-items: center;
+      }
+      @media (max-width: 900px) {
+        .radar-wrap {
+          grid-template-columns: 1fr;
+        }
+      }
+      .radar-controls label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--mono);
+        font-size: 0.82rem;
+        padding: 12px 0;
+        border-top: 1px solid var(--line-soft);
+        cursor: pointer;
+      }
+      .radar-controls label:first-child {
+        border-top: none;
+      }
+      .radar-controls input {
+        accent-color: var(--azure);
+        width: 15px;
+        height: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bg-grid"></div>
+    <div class="progress" id="progress"></div>
+
+    <nav class="rail" id="rail">
+      <button data-target="hero" class="active">Introduction</button>
+      <button data-target="overview">Market</button>
+      <button data-target="services">Services</button>
+      <button data-target="strengths">Strengths</button>
+      <button data-target="cases">Cases</button>
+      <button data-target="innovation">Innovation</button>
+      <button data-target="economics">Economics</button>
+      <button data-target="sustainability">Sustainability</button>
+      <button data-target="outlook">Outlook</button>
+    </nav>
+
+    <main>
+      <!-- ============ HERO ============ -->
+      <section class="hero" id="hero">
+        <div class="wrap">
+          <div class="hero-kicker">
+            Nanyang Technological University &nbsp;·&nbsp; IN6237 Cloud
+            Computing &amp; Infrastructure &nbsp;
+          </div>
+          <h1>
+            Dominance <span class="accent-azure">&amp;</span> Differentiation
+          </h1>
+          <p class="hero-sub">
+            A data-driven comparative analysis of how
+            <span class="accent-aws">AWS</span>,
+            <span class="accent-azure">Azure</span>, and
+            <span class="accent-gcp">Google Cloud</span> compete for a market on
+            track to hit
+            <strong style="color: var(--text)">$2 trillion by 2030</strong> —
+            dissecting market share, service strategy, and the technologies
+            shaping the next decade of the cloud oligopoly.
+          </p>
+
+          <div class="hero-meta">
+            <div><strong>Jason Khoo</strong>Author</div>
+            <div><strong>Mr Wong Twee Wee</strong>Instructor</div>
+            <div>
+              <strong>IN6237 Cloud Computing and Infrastructure</strong>Course
+            </div>
+          </div>
+
+          <div class="skyline" id="skyline">
+            <div class="tower aws">
+              <div class="bar"></div>
+              <div class="pct">33%</div>
+              <div class="label">AWS · Q4 2024</div>
+            </div>
+            <div class="tower azure">
+              <div class="bar"></div>
+              <div class="pct">20%</div>
+              <div class="label">AZURE · Q4 2024</div>
+            </div>
+            <div class="tower gcp">
+              <div class="bar"></div>
+              <div class="pct">10%</div>
+              <div class="label">GCP · Q4 2024</div>
+            </div>
+            <div class="skyline-caption">
+              Global cloud infrastructure market share, Canalys/Statista 2025
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ MARKET OVERVIEW ============ -->
+      <section id="overview">
+        <div class="wrap">
+          <div class="section-head reveal">
+            <div class="eyebrow">01 — Market Overview</div>
+            <h2>An oligopoly compounding at 18% a year</h2>
+            <p>
+              End-user spending on public cloud has more than doubled since
+              2020, and the "Big Three" have quietly tightened their grip — from
+              58% of the market to 63% by Q4 2024, even as the overall pie keeps
+              growing.
+            </p>
+          </div>
+
+          <div class="stat-strip reveal">
+            <div>
+              <div class="num">$723B</div>
+              <div class="lbl">EST. 2025 END-USER SPEND</div>
+            </div>
+            <div>
+              <div class="num">~18%</div>
+              <div class="lbl">SPENDING CAGR, 2020–25</div>
+            </div>
+            <div>
+              <div class="num">63%</div>
+              <div class="lbl">"BIG THREE" MARKET SHARE, Q4'24</div>
+            </div>
+            <div>
+              <div class="num">$2T</div>
+              <div class="lbl">PROJECTED MARKET BY 2030</div>
+            </div>
+          </div>
+
+          <div class="grid-2" style="margin-top: 24px">
+            <div class="chart-card reveal">
+              <div class="chart-head">
+                <div>
+                  <h3>Public cloud end-user spending</h3>
+                  <div class="eyebrow" style="margin: 6px 0 0">
+                    Worldwide, US$ billions
+                  </div>
+                </div>
+              </div>
+              <canvas id="spendChart" height="220"></canvas>
+              <div class="note">Source: Gartner, via Statista (2024)</div>
+            </div>
+            <div class="chart-card reveal">
+              <div class="chart-head">
+                <div>
+                  <h3>Vendor market share</h3>
+                  <div class="eyebrow" style="margin: 6px 0 0">
+                    Q4 2020 – Q4 2024
+                  </div>
+                </div>
+              </div>
+              <canvas id="shareChart" height="220"></canvas>
+              <div class="note">Source: Canalys &amp; Statista (2025)</div>
+            </div>
+          </div>
+
+          <div class="chart-card reveal" style="margin-top: 20px">
+            <div class="chart-head">
+              <div>
+                <h3>Revenue &amp; year-over-year growth</h3>
+                <div class="eyebrow" style="margin: 6px 0 0">
+                  US$ billions, bars = revenue · lines = YoY %
+                </div>
+              </div>
+              <div class="legend-row">
+                <span><i class="dot aws"></i>AWS</span>
+                <span
+                  ><i class="dot azure"></i>Microsoft Intelligent Cloud
+                  (Azure)</span
+                >
+                <span><i class="dot gcp"></i>Google Cloud</span>
+              </div>
+            </div>
+            <canvas id="revenueChart" height="230"></canvas>
+            <div class="note">
+              AWS leads on revenue ($107.6B, 2024) but its growth has slowed to
+              19% YoY, suggesting a shift toward monetisation. GCP trails on
+              scale but leads on growth (31% YoY) — the profile of a challenger
+              still spending to win share. Source: Amazon, Alphabet, Microsoft
+              company filings via Statista (2025).
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ SERVICES ============ -->
+      <section id="services">
+        <div class="wrap">
+          <div class="section-head reveal">
+            <div class="eyebrow">02 — Core Service Offerings</div>
+            <h2>Same building blocks, different philosophies</h2>
+            <p>
+              Compute, storage, and AI are table stakes for all three providers
+              — the differentiation shows up in how each is engineered. Toggle
+              between categories to compare.
+            </p>
+          </div>
+
+          <div class="tabs reveal" id="svcTabs">
+            <button data-tab="compute" class="active">Compute</button>
+            <button data-tab="storage">Storage &amp; Database</button>
+            <button data-tab="ai">AI &amp; ML</button>
+          </div>
+
+          <div class="reveal">
+            <div class="tab-panel active" data-panel="compute">
+              <div class="svc-table">
+                <div class="cell">
+                  <span class="tag aws">AWS</span>
+                  <h4 style="margin-top: 12px">EC2 + EKS/ECS + Lambda</h4>
+                  <p>
+                    Widest VM family spread
+                    (general/compute/memory/storage-optimised, accelerated).
+                    Mature container and serverless stack suited for everything
+                    from HPC to microservices.
+                  </p>
+                </div>
+                <div class="cell">
+                  <span class="tag azure">Azure</span>
+                  <h4 style="margin-top: 12px">
+                    Virtual Machines + AKS + Functions
+                  </h4>
+                  <p>
+                    Windows-optimised VMs and Azure Boost performance tuning.
+                    Arc-enabled AKS bridges on-prem and cloud, with native
+                    GitHub CI/CD.
+                  </p>
+                </div>
+                <div class="cell">
+                  <span class="tag gcp">GCP</span>
+                  <h4 style="margin-top: 12px">
+                    Compute Engine + GKE + Cloud Run
+                  </h4>
+                  <p>
+                    Custom machine types, preemptible pricing, and live
+                    migration. As the Kubernetes originator, GKE Autopilot leads
+                    on container automation.
+                  </p>
+                </div>
+              </div>
+              <p class="svc-note">
+                AWS wins on breadth, Azure on hybrid/enterprise alignment, GCP
+                on infrastructure flexibility and Kubernetes-native tooling.
+              </p>
+            </div>
+            <div class="tab-panel" data-panel="storage">
+              <div class="svc-table">
+                <div class="cell">
+                  <span class="tag aws">AWS</span>
+                  <h4 style="margin-top: 12px">S3 · EBS · EFS · RDS/Aurora</h4>
+                  <p>
+                    Durable object storage, high-performance block storage for
+                    critical workloads, and Aurora for scalable relational
+                    databases with replication.
+                  </p>
+                </div>
+                <div class="cell">
+                  <span class="tag azure">Azure</span>
+                  <h4 style="margin-top: 12px">
+                    Blob · Managed Disks · Azure Files · SQL DB
+                  </h4>
+                  <p>
+                    Tiered storage with fine-grained access control, disks
+                    integrated directly with VMs, and SQL Database built for
+                    hybrid, Windows-centric environments.
+                  </p>
+                </div>
+                <div class="cell">
+                  <span class="tag gcp">GCP</span>
+                  <h4 style="margin-top: 12px">
+                    Cloud Storage · Persistent Disk · Spanner/Cloud SQL
+                  </h4>
+                  <p>
+                    Multi-regional storage built for global consistency, and
+                    Spanner — a horizontally-scalable relational database rare
+                    among the three.
+                  </p>
+                </div>
+              </div>
+              <p class="svc-note">
+                GCP's Spanner is the standout: globally consistent relational
+                data at scale, a genuinely hard problem the other two don't
+                solve the same way.
+              </p>
+            </div>
+            <div class="tab-panel" data-panel="ai">
+              <div class="svc-table">
+                <div class="cell">
+                  <span class="tag aws">AWS</span>
+                  <h4 style="margin-top: 12px">SageMaker · Bedrock</h4>
+                  <p>
+                    End-to-end ML lifecycle tooling plus Rekognition,
+                    Comprehend, Polly for rapid task implementation. Bedrock
+                    offers multi-model access without infra management.
+                  </p>
+                </div>
+                <div class="cell">
+                  <span class="tag azure">Azure</span>
+                  <h4 style="margin-top: 12px">
+                    Azure ML · Azure OpenAI Service
+                  </h4>
+                  <p>
+                    MLOps pipelines and model registry, paired with Azure AI
+                    Services that lower the barrier for non-technical teams.
+                  </p>
+                </div>
+                <div class="cell">
+                  <span class="tag gcp">GCP</span>
+                  <h4 style="margin-top: 12px">
+                    Vertex AI · Gemini · BigQuery
+                  </h4>
+                  <p>
+                    Unified workflow with direct access to Gemini foundation
+                    models, AutoML, and deep integration with BigQuery for
+                    analytics-driven AI.
+                  </p>
+                </div>
+              </div>
+              <p class="svc-note">
+                This is GCP's home turf — the tightest link between data
+                warehousing (BigQuery) and model development of the three
+                platforms.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ STRENGTHS RADAR ============ -->
+      <section id="strengths">
+        <div class="wrap">
+          <div class="section-head reveal">
+            <div class="eyebrow">03 — Strategic Positioning</div>
+            <h2>Three different bets on where cloud value goes next</h2>
+            <p>
+              A qualitative synthesis of each provider's strategic posture
+              across six dimensions, based on the service, pricing, and
+              case-study evidence in this analysis. Toggle providers on and off
+              to compare shapes.
+            </p>
+          </div>
+
+          <div class="radar-wrap reveal">
+            <div class="chart-card">
+              <canvas id="radarChart" height="320"></canvas>
+              <div class="note">
+                Author's qualitative synthesis (1–5 scale), not an official
+                vendor benchmark — derived from the service, pricing, and
+                case-study evidence in this paper.
+              </div>
+            </div>
+            <div class="radar-controls panel">
+              <label
+                ><input type="checkbox" data-provider="0" checked /><span
+                  class="tag aws"
+                  >AWS</span
+                >&nbsp; The generalist — broadest catalogue, most flexible
+                pricing.</label
+              >
+              <label
+                ><input type="checkbox" data-provider="1" checked /><span
+                  class="tag azure"
+                  >Azure</span
+                >&nbsp; The enterprise fortress — hybrid, compliance, Microsoft
+                lock-in.</label
+              >
+              <label
+                ><input type="checkbox" data-provider="2" checked /><span
+                  class="tag gcp"
+                  >GCP</span
+                >&nbsp; The specialist — AI, analytics, and 24/7 clean energy
+                leadership.</label
+              >
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ CASE STUDIES ============ -->
+      <section id="cases">
+        <div class="wrap">
+          <div class="section-head reveal">
+            <div class="eyebrow">04 — Industry Verticals</div>
+            <h2>From generic infrastructure to sector-specific bets</h2>
+            <p>
+              Competition is shifting from raw capacity to industry
+              specialisation. Three flagship deployments make the strategic
+              differences concrete.
+            </p>
+          </div>
+
+          <div class="grid-3 reveal">
+            <div class="case-card aws">
+              <span class="tag aws">AWS · Media &amp; Entertainment</span>
+              <div class="co">Netflix</div>
+              <div class="metric">200M+</div>
+              <div class="metric-lbl">SUBSCRIBERS SERVED GLOBALLY</div>
+              <p>
+                Global low-latency delivery across the full AWS stack — compute,
+                storage, analytics, ML — hardened by chaos-engineering tools
+                like Chaos Monkey for continuous availability.
+              </p>
+            </div>
+            <div class="case-card azure">
+              <span class="tag azure">Azure · Infrastructure Engineering</span>
+              <div class="co">Bentley Systems × Minnesota DOT</div>
+              <div class="metric">40%</div>
+              <div class="metric-lbl">COST SAVINGS PER BRIDGE INSPECTION</div>
+              <p>
+                Digital-twin inspection via Azure Mixed Reality / HoloLens 2,
+                projecting roughly USD 4M in annual savings for the Minnesota
+                Department of Transportation.
+              </p>
+            </div>
+            <div class="case-card gcp">
+              <span class="tag gcp">GCP · Financial Services</span>
+              <div class="co">HSBC</div>
+              <div class="metric">16×</div>
+              <div class="metric-lbl">FASTER RISK SCENARIO MODELLING</div>
+              <p>
+                A Risk Advisory Tool built on GCP cut "what-if" scenario
+                simulation time down to roughly 15 minutes, enabling real-time
+                intraday risk management.
+              </p>
+            </div>
+          </div>
+
+          <div class="grid-3 reveal" style="margin-top: 20px">
+            <div class="case-card aws">
+              <span class="tag aws">AWS · Public Sector</span>
+              <div class="co">GovCloud (US)</div>
+              <div class="metric">FedRAMP High</div>
+              <div class="metric-lbl">+ ITAR-COMPLIANT ISOLATION</div>
+              <p>
+                Full US data sovereignty — processing and storage confined to
+                the US, access limited to screened US entities and US Persons.
+              </p>
+            </div>
+            <div class="case-card azure">
+              <span class="tag azure">Azure · Healthcare</span>
+              <div class="co">Azure Health Data Services</div>
+              <div class="metric">FHIR / DICOM</div>
+              <div class="metric-lbl">NATIVE INTEROP STANDARDS</div>
+              <p>
+                Purpose-built for protected health information, with
+                de-identification for secondary use and SAS integration for
+                real-time clinical analytics.
+              </p>
+            </div>
+            <div class="case-card gcp">
+              <span class="tag gcp">GCP · Retail</span>
+              <div class="co">The Home Depot</div>
+              <div class="metric">15PB+</div>
+              <div class="metric-lbl">SCALED FROM A 450TB WAREHOUSE</div>
+              <p>
+                Migration to BigQuery now powers sales forecasting and real-time
+                performance scorecards across 2,200+ stores.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ INNOVATION ============ -->
+      <section id="innovation">
+        <div class="wrap">
+          <div class="section-head reveal">
+            <div class="eyebrow">05 — Technology &amp; Innovation</div>
+            <h2>Where the next decade of differentiation gets built</h2>
+            <p>
+              Beyond core infrastructure, all three are racing across three
+              frontiers: AI-native operations, quantum computing, and the edge.
+            </p>
+          </div>
+
+          <div class="grid-3 reveal">
+            <div class="innov-card">
+              <h3>AI-Powered Cloud Operations</h3>
+              <div class="sub">
+                Generative AI embedded into the console itself
+              </div>
+              <ul>
+                <li>
+                  <b>AWS</b> — Amazon Q generates IaC, explains errors, and
+                  automates troubleshooting across console, CLI and IDE.
+                </li>
+                <li>
+                  <b>Azure</b> — Copilot for Azure produces deployment scripts
+                  (CLI/PowerShell/Terraform) and monitors cost and security
+                  posture.
+                </li>
+                <li>
+                  <b>GCP</b> — Gemini Cloud Assist &amp; Code Assist pair
+                  natural-language design with contextual, IDE-native coding
+                  help.
+                </li>
+              </ul>
+            </div>
+            <div class="innov-card">
+              <h3>Quantum Computing</h3>
+              <div class="sub">Experimental, but strategically staked out</div>
+              <ul>
+                <li>
+                  <b>AWS Braket</b> — multi-hardware access; used by BMW for
+                  material deformation and quality-assessment simulation.
+                </li>
+                <li>
+                  <b>Azure Quantum</b> — enterprise-integration play,
+                  benchmarking portfolio and fleet optimisation with KPMG.
+                </li>
+                <li>
+                  <b>GCP Willow chip</b> — a benchmark in minutes that would
+                  take a classical supercomputer 10 septillion years.
+                </li>
+              </ul>
+            </div>
+            <div class="innov-card">
+              <h3>Edge Computing</h3>
+              <div class="sub">Bringing compute to where data is created</div>
+              <ul>
+                <li>
+                  <b>AWS Wavelength</b> — cut Verizon/NHL video delivery latency
+                  from seconds to milliseconds.
+                </li>
+                <li>
+                  <b>Azure Edge Zones</b> — piloted beyond-visual-line-of-sight
+                  autonomous drone control with AT&amp;T and EVA over 5G.
+                </li>
+                <li>
+                  <b>Google Distributed Cloud Edge</b> — powers Kroger's
+                  frictionless checkout and real-time inventory monitoring.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ ECONOMICS ============ -->
+      <section id="economics">
+        <div class="wrap">
+          <div class="section-head reveal">
+            <div class="eyebrow">06 — Economics &amp; Strategy</div>
+            <h2>Pricing as a lever, not just a price tag</h2>
+            <p>
+              All three run pay-as-you-go at the core, but the discount
+              architecture around it reveals who they're really optimising for.
+            </p>
+          </div>
+
+          <div class="grid-3 reveal">
+            <div class="price-card aws">
+              <h3><span class="tag aws">AWS</span></h3>
+              <ol>
+                <li>
+                  <b>Savings Plans</b> — flexible commitment by spend, not
+                  instance type.
+                </li>
+                <li>
+                  <b>Reserved Instances</b> — 1–3yr terms, up to 72% off + zone
+                  capacity reservation.
+                </li>
+                <li>
+                  <b>Spot Instances</b> — up to 90% off unused capacity,
+                  short-term.
+                </li>
+              </ol>
+              <div class="adv">
+                → Developer-centric flexibility across services &amp; regions.
+              </div>
+            </div>
+            <div class="price-card azure">
+              <h3><span class="tag azure">Azure</span></h3>
+              <ol>
+                <li>
+                  <b>Hybrid Benefit</b> — reuse existing Windows/SQL licences
+                  for savings.
+                </li>
+                <li>
+                  <b>Reserved VMs</b> — up to 72% off, stackable to 80% with
+                  Hybrid Benefit.
+                </li>
+                <li><b>Spot VMs</b> — up to 90% off, mirroring AWS's model.</li>
+              </ol>
+              <div class="adv">
+                → Outsized value if you're already a Microsoft shop.
+              </div>
+            </div>
+            <div class="price-card gcp">
+              <h3><span class="tag gcp">GCP</span></h3>
+              <ol>
+                <li>
+                  <b>Sustained Use Discounts</b> — automatic, no commitment
+                  required.
+                </li>
+                <li>
+                  <b>Committed Use Discounts</b> — 1–3yr terms, up to 79% off.
+                </li>
+                <li>
+                  <b>Preemptible VMs</b> — up to 91% off, the deepest of the
+                  three.
+                </li>
+              </ol>
+              <div class="adv">
+                → Rewards steady analytics/data workloads by default.
+              </div>
+            </div>
+          </div>
+
+          <div class="grid-3 reveal" style="margin-top: 20px">
+            <div class="panel">
+              <h4 style="font-size: 0.95rem">AWS Partner Network</h4>
+              <div
+                class="stat-strip"
+                style="grid-template-columns: 1fr 1fr; margin-top: 14px"
+              >
+                <div style="padding: 16px">
+                  <div class="num" style="font-size: 1.4rem">140K+</div>
+                  <div class="lbl">PARTNERS</div>
+                </div>
+                <div style="padding: 16px">
+                  <div class="num" style="font-size: 1.4rem">$6.40</div>
+                  <div class="lbl">REVENUE MULTIPLIER / $1</div>
+                </div>
+              </div>
+              <p
+                style="
+                  font-size: 0.85rem;
+                  color: var(--text-dim);
+                  margin-top: 14px;
+                "
+              >
+                Largest, most mature ecosystem — scale that's harder for smaller
+                partners to stand out within.
+              </p>
+            </div>
+            <div class="panel">
+              <h4 style="font-size: 0.95rem">Azure AI Cloud Partner Program</h4>
+              <p
+                style="
+                  font-size: 0.85rem;
+                  color: var(--text-dim);
+                  margin-top: 14px;
+                "
+              >
+                Embeds system integrators and ISVs inside the Microsoft
+                ecosystem — strong cross-sell, but partners inherit exposure to
+                Microsoft's own licensing shifts.
+              </p>
+            </div>
+            <div class="panel">
+              <h4 style="font-size: 0.95rem">GCP Partner Advantage</h4>
+              <p
+                style="
+                  font-size: 0.85rem;
+                  color: var(--text-dim);
+                  margin-top: 14px;
+                "
+              >
+                Smaller, more targeted — dedicated advisors and specialisation
+                tracks over sheer scale, built for rapid niche-sector adoption.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ SUSTAINABILITY ============ -->
+      <section id="sustainability">
+        <div class="wrap">
+          <div class="section-head reveal">
+            <div class="eyebrow">07 — Sustainability</div>
+            <h2>
+              Data centres are projected to hit 20% of global electricity demand
+            </h2>
+            <p>
+              Left unmanaged, hyperscale growth accelerates climate impact and
+              drives up cooling costs. Each provider is racing toward a
+              different definition of "clean."
+            </p>
+          </div>
+
+          <div class="grid-3 reveal">
+            <div class="sus-card">
+              <span class="tag aws">AWS</span>
+              <div class="target">Net-zero by 2040</div>
+              <p>
+                Water-positive by 2030. Reengineered power distribution and
+                liquid cooling lifted efficiency — global PUE of 1.15 in 2023,
+                with the best site at 1.04.
+              </p>
+              <div class="pue-bar"><i style="width: 87%"></i></div>
+              <p
+                style="
+                  margin-top: 8px;
+                  font-family: var(--mono);
+                  font-size: 0.7rem;
+                  color: var(--text-mute);
+                "
+              >
+                PUE 1.15 avg (1.00 = perfect efficiency)
+              </p>
+            </div>
+            <div class="sus-card">
+              <span class="tag azure">Microsoft / Azure</span>
+              <div class="target">Carbon-negative by 2030</div>
+              <p>
+                Water-positive and zero-waste by the same year. Wind-linked
+                batteries in Ireland, surplus heat warming 6,000 Danish homes,
+                and free-air cooling in Sweden cutting energy 30% and water 90%.
+              </p>
+            </div>
+            <div class="sus-card">
+              <span class="tag gcp">GCP</span>
+              <div class="target">Net-zero by 2030</div>
+              <p>
+                The most aggressive target — net-zero across operations and the
+                full supply chain, powered by 24/7 carbon-free energy via
+                co-located renewable projects with Intersect Power.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ OUTLOOK ============ -->
+      <section id="outlook">
+        <div class="wrap">
+          <div class="section-head reveal">
+            <div class="eyebrow">08 — Outlook</div>
+            <h2>No single winner — a diversifying oligopoly</h2>
+          </div>
+          <div class="outlook reveal">
+            <h2>Agentic AI is the next inflection point</h2>
+            <p>
+              Amazon Bedrock &amp; Q, Azure OpenAI Service, and Gemini/Vertex AI
+              are all converging toward systems that can autonomously plan,
+              reason, and execute — not just respond. This is where the next
+              wave of platform differentiation will play out.
+            </p>
+            <p>
+              Rather than a single winner, expect continued divergence along
+              each provider's proven strengths:
+              <b style="color: var(--aws)">AWS</b> on breadth and developer
+              reach, <b style="color: var(--azure)">Azure</b> on
+              regulated-enterprise compliance,
+              <b style="color: var(--gcp)">GCP</b> on data-driven,
+              analytics-heavy innovation.
+            </p>
+            <div class="pillars">
+              <div class="pillar">
+                ◆ Intelligence — agentic AI &amp; foundation models
+              </div>
+              <div class="pillar">
+                ◆ Sustainability — 24/7 carbon-free operations
+              </div>
+              <div class="pillar">
+                ◆ Automation — AI-native cloud operations
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ FOOTER ============ -->
+      <footer>
+        <div class="wrap">
+          <div class="footer-grid reveal">
+            <div>
+              <h3>About this analysis</h3>
+              <p>
+                Originally submitted as a Technology Research Paper for IN6237
+                Cloud Computing &amp; Infrastructure at Nanyang Technological
+                University, and adapted here as an interactive portfolio piece
+                demonstrating data synthesis, visualisation, and technical
+                storytelling for data science &amp; data engineering roles.
+              </p>
+              <div class="footer-links">
+                <a href="mailto:jkhooyh@gmail.com">jkhooyh@gmail.com</a>
+                <a href="https://www.linkedin.com/in/jasonkhooyh/">LinkedIn</a>
+                <a href="https://github.com/jasonkyh">GitHub</a>
+              </div>
+            </div>
+            <div style="min-width: 260px; flex: 1; max-width: 420px">
+              <details>
+                <summary>▸ Sources &amp; references (34)</summary>
+                <div class="refs">
+                  Alphabet (2025). Google Cloud Platform revenues, via
+                  Statista.<br />
+                  Amazon (2025). Net sales revenue by segment, via Statista.<br />
+                  AWS (n.d.). Reserved Instances / Spot / Savings Plans pricing
+                  docs.<br />
+                  Azure (2022, n.d.). Health Data Services; FHIR/SAS
+                  integration; Hybrid Benefit; Reserved &amp; Spot VMs.<br />
+                  Bains, P. (2025). AWS Partner Profitability Framework. AWS
+                  Blog.<br />
+                  Buyya, R. et al. (2024). Energy-efficiency &amp;
+                  sustainability in cloud computing. Software: Practice &amp;
+                  Experience.<br />
+                  Canalys &amp; Statista (2025). Cloud infrastructure vendor
+                  market share.<br />
+                  Dalager, B. (2021). Building on quantum advantage. KPMG.<br />
+                  DynaTech Systems (2025). AWS vs Azure vs Google Cloud
+                  comparison.<br />
+                  Gartner (2024). Public cloud services end-user spending, via
+                  Statista.<br />
+                  Goldman Sachs Research (2024). Cloud revenues poised to reach
+                  $2T by 2030.<br />
+                  Goodison, D. (2019). Google Cloud Partner Advantage. CRN.<br />
+                  Google (2025, n.d.). Gemini Cloud Assist; Home Depot &amp;
+                  HSBC case studies; CUD/SUD/preemptible pricing docs.<br />
+                  Jenkins, B. (2025). Amazon Q Developer experience. AWS
+                  Blog.<br />
+                  Kadam, M. (2024). Netflix and AWS case study. Bacancy.<br />
+                  King, C. (2024). AWS data centre sustainability.
+                  Sustainability Magazine.<br />
+                  Koenig, C. (2021). BMW Group Quantum Computing Challenge.<br />
+                  Krishnakumar, V. (2025). Azure Arc hybrid management.
+                  CloudOptimo.<br />
+                  Larbi, S. &amp; Vanama, V. (2023). Google Distributed Cloud
+                  Edge retail use cases.<br />
+                  Manor, E. (2020). Anthos multi-cloud. Google Cloud Blog.<br />
+                  McKinsey &amp; Company (2024). What is cloud computing?<br />
+                  Microsoft (2024, 2025, n.d.). Segment revenue via Statista;
+                  Copilot in Azure; Bentley Systems case study.<br />
+                  Mwiti, D. (2025). AWS Outposts explained. DataCamp.<br />
+                  Nakagawa, M. (2024). Sustainable by design. Microsoft Blog.<br />
+                  Neven, H. (2024). Meet Willow. Google Blog.<br />
+                  Richter, F. (2025). The Big Three Stay Ahead. Statista.<br />
+                  Siddiqui, L. (2024). AWS vs Azure vs GCP comparison.
+                  DataCamp.<br />
+                  Sneha et al. (2023). Green Cloud Computing. Springer.<br />
+                  Susnjara, S. &amp; Smalley, I. (2025). What is Cloud
+                  Computing? IBM.<br />
+                  The Cloud Native Experts (2024). AWS GovCloud basics. Aqua.<br />
+                  Verizon Sourcing LLC (2024). Verizon/AWS/NHL 5G
+                  broadcasting.<br />
+                  Wheeler, K. (2024). Google's AI &amp; sustainable cloud.
+                  Technology Magazine.<br />
+                  Wickramasinghe, S. (2024). AWS vs Azure vs GCP. BMC Blogs.<br />
+                  Zander, J. (2021). Microsoft/AT&amp;T 5G edge. Azure Blog.
+                </div>
+              </details>
+            </div>
+          </div>
+          <div class="copyright">
+            <span
+              >© 2026 Jason Khoo — Prepared for IN6237, Nanyang Technological
+              University</span
+            >
+            <span>Built with HTML, CSS &amp; Chart.js</span>
+          </div>
+        </div>
+      </footer>
+    </main>
+
+    <script>
+      /* ============ SCROLL PROGRESS + NAV ============ */
+      const progress = document.getElementById("progress");
+      const sections = [...document.querySelectorAll("main section")];
+      const railBtns = [...document.querySelectorAll("nav.rail button")];
+
+      function onScroll() {
+        const h = document.documentElement;
+        const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight)) * 100;
+        progress.style.width = pct + "%";
+
+        let current = sections[0].id;
+        for (const s of sections) {
+          const r = s.getBoundingClientRect();
+          if (r.top <= 140) current = s.id;
+        }
+        railBtns.forEach((b) =>
+          b.classList.toggle("active", b.dataset.target === current),
+        );
+      }
+      document.addEventListener("scroll", onScroll, { passive: true });
+      onScroll();
+
+      railBtns.forEach((b) =>
+        b.addEventListener("click", () => {
+          document
+            .getElementById(b.dataset.target)
+            .scrollIntoView({ behavior: "smooth" });
+        }),
+      );
+
+      /* ============ REVEAL ON SCROLL ============ */
+      const io = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((e) => {
+            if (e.isIntersecting) e.target.classList.add("in");
+          });
+        },
+        { threshold: 0.15 },
+      );
+      document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+
+      /* ============ HERO SKYLINE ANIMATION ============ */
+      const skyline = document.getElementById("skyline");
+      const skyIo = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((e) => {
+            if (e.isIntersecting) {
+              skyline.classList.add("in");
+              skyIo.disconnect();
+            }
+          });
+        },
+        { threshold: 0.3 },
+      );
+      skyIo.observe(skyline);
+
+      /* ============ TABS ============ */
+      document.getElementById("svcTabs").addEventListener("click", (e) => {
+        const btn = e.target.closest("button");
+        if (!btn) return;
+        document
+          .querySelectorAll("#svcTabs button")
+          .forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        document
+          .querySelectorAll(".tab-panel")
+          .forEach((p) =>
+            p.classList.toggle("active", p.dataset.panel === btn.dataset.tab),
+          );
+      });
+
+      /* ============ CHART.JS GLOBAL DEFAULTS ============ */
+      Chart.defaults.font.family = "'IBM Plex Mono', monospace";
+      Chart.defaults.font.size = 11;
+      Chart.defaults.color = "#93a5b8";
+      const gridColor = "rgba(255,255,255,.06)";
+      const AWS = "#ffb454",
+        AZURE = "#5eb3ff",
+        GCP = "#48e0a5",
+        OTHERS = "#3a4657";
+
+      /* ---- Spending line chart ---- */
+      new Chart(document.getElementById("spendChart"), {
+        type: "line",
+        data: {
+          labels: ["2020", "2021", "2022", "2023", "2024", "2025e"],
+          datasets: [
+            {
+              label: "End-user spend ($B)",
+              data: [314, 412.63, 478.32, 561.1, 595.65, 723.42],
+              borderColor: AZURE,
+              backgroundColor: "rgba(94,179,255,.12)",
+              fill: true,
+              tension: 0.35,
+              pointBackgroundColor: AZURE,
+              pointRadius: 4,
+              borderWidth: 2.5,
+            },
+          ],
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: {
+            y: {
+              grid: { color: gridColor },
+              ticks: { callback: (v) => "$" + v + "B" },
+            },
+            x: { grid: { display: false } },
+          },
+        },
+      });
+
+      /* ---- Market share stacked bar ---- */
+      new Chart(document.getElementById("shareChart"), {
+        type: "bar",
+        data: {
+          labels: ["2020", "2021", "2022", "2023", "2024"],
+          datasets: [
+            {
+              label: "AWS",
+              data: [31, 33, 32, 31, 33],
+              backgroundColor: AWS,
+              stack: "s",
+            },
+            {
+              label: "Azure",
+              data: [20, 22, 23, 26, 20],
+              backgroundColor: AZURE,
+              stack: "s",
+            },
+            {
+              label: "GCP",
+              data: [7, 9, 10, 10, 10],
+              backgroundColor: GCP,
+              stack: "s",
+            },
+            {
+              label: "Others",
+              data: [42, 36, 35, 33, 37],
+              backgroundColor: OTHERS,
+              stack: "s",
+            },
+          ],
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: {
+            y: {
+              stacked: true,
+              max: 100,
+              grid: { color: gridColor },
+              ticks: { callback: (v) => v + "%" },
+            },
+            x: { stacked: true, grid: { display: false } },
+          },
+        },
+      });
+
+      /* ---- Revenue + YoY combo ---- */
+      new Chart(document.getElementById("revenueChart"), {
+        data: {
+          labels: ["2020", "2021", "2022", "2023", "2024"],
+          datasets: [
+            {
+              type: "bar",
+              label: "AWS Revenue",
+              data: [45.37, 62.2, 80.1, 90.76, 107.56],
+              backgroundColor: AWS,
+              order: 2,
+            },
+            {
+              type: "bar",
+              label: "Azure Revenue",
+              data: [48.37, 60.08, 75.25, 87.91, 105.36],
+              backgroundColor: AZURE,
+              order: 2,
+            },
+            {
+              type: "bar",
+              label: "GCP Revenue",
+              data: [13.06, 19.21, 26.29, 33.09, 43.23],
+              backgroundColor: GCP,
+              order: 2,
+            },
+          ],
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: {
+            y: {
+              grid: { color: gridColor },
+              ticks: { callback: (v) => "$" + v + "B" },
+            },
+            x: { grid: { display: false } },
+          },
+        },
+      });
+
+      /* ---- Radar chart ---- */
+      const radarLabels = [
+        "Service Breadth",
+        "Enterprise / Hybrid Integration",
+        "AI & Analytics Leadership",
+        "Pricing Flexibility",
+        "Edge / Quantum Innovation",
+        "Sustainability Ambition",
+      ];
+      const radarData = [
+        {
+          label: "AWS",
+          data: [5, 3.5, 4, 4.5, 4, 3],
+          border: AWS,
+          bg: "rgba(255,180,84,.14)",
+        },
+        {
+          label: "Azure",
+          data: [3.5, 5, 4, 4.5, 3.5, 4.5],
+          border: AZURE,
+          bg: "rgba(94,179,255,.14)",
+        },
+        {
+          label: "GCP",
+          data: [3, 3.5, 5, 4.5, 4.5, 5],
+          border: GCP,
+          bg: "rgba(72,224,165,.14)",
+        },
+      ];
+      const radarChart = new Chart(document.getElementById("radarChart"), {
+        type: "radar",
+        data: {
+          labels: radarLabels,
+          datasets: radarData.map((d) => ({
+            label: d.label,
+            data: d.data,
+            borderColor: d.border,
+            backgroundColor: d.bg,
+            borderWidth: 2,
+            pointBackgroundColor: d.border,
+            pointRadius: 3,
+          })),
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: {
+            r: {
+              min: 0,
+              max: 5,
+              grid: { color: gridColor },
+              angleLines: { color: gridColor },
+              pointLabels: { color: "#93a5b8", font: { size: 10.5 } },
+              ticks: { display: false, stepSize: 1 },
+            },
+          },
+        },
+      });
+      document.querySelectorAll(".radar-controls input").forEach((inp) => {
+        inp.addEventListener("change", () => {
+          const idx = +inp.dataset.provider;
+          radarChart.getDatasetMeta(idx).hidden = !inp.checked;
+          radarChart.update();
+        });
+      });
+    </script>
+  </body>
 </html>
